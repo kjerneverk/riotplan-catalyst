@@ -1,2 +1,10 @@
-// Placeholder files for loader module
-// Will be implemented in Step 3
+/**
+ * Catalyst loading from local directories
+ * @packageDocumentation
+ *
+ * TODO: Implement in Step 3
+ */
+
+export const loadCatalyst = async () => {
+  throw new Error('Not yet implemented');
+};

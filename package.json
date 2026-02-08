@@ -19,18 +19,19 @@
     "test": "npm run test:coverage",
     "test:coverage": "vitest run --coverage",
     "test:debug": "vitest --run --coverage --reporter verbose",
-    "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "clean": "rm -rf dist",
     "precommit": "npm run build && npm run lint && npm run test",
     "prepublishOnly": "npm run clean && npm run build"
   },
   "dependencies": {
-    "zod": "^3.23.0",
-    "yaml": "^2.4.0"
+    "yaml": "^2.4.0",
+    "zod": "^3.23.0"
   },
   "devDependencies": {
     "@rollup/plugin-replace": "^5.0.5",
+    "@types/node": "^25.2.2",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "@vitest/coverage-v8": "^1.1.0",

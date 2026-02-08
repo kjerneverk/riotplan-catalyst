@@ -31,7 +31,7 @@ export default [
       quotes: ['error', 'single'],
       semi: ['error', 'always'],
       'no-console': ['error', { allow: ['warn', 'error'] }],
-      'import/order': ['error', { alphabeticalOrder: true }],
+      'import/order': 'error',
     },
   },
 ];
