@@ -3,9 +3,9 @@
  * @packageDocumentation
  */
 
-import type { Catalyst } from '@/types';
-import type { FacetType } from '@/schema/schemas';
-import { FACET_TYPES } from '@/schema/schemas';
+import type { Catalyst } from '@/types.js';
+import type { FacetType } from '@/schema/schemas.js';
+import { FACET_TYPES } from '@/schema/schemas.js';
 
 /**
  * A single piece of content with source attribution
@@ -61,70 +61,70 @@ export interface MergedCatalyst {
  * ```
  */
 export function mergeCatalysts(catalysts: Catalyst[]): MergedCatalyst {
-  const mergedFacets: MergedFacets = {};
-  const catalystIds = catalysts.map(c => c.manifest.id);
-  const contributions = new Map<string, {
+    const mergedFacets: MergedFacets = {};
+    const catalystIds = catalysts.map(c => c.manifest.id);
+    const contributions = new Map<string, {
     facetTypes: FacetType[];
     contentCount: number;
   }>();
 
-  // Process each facet type
-  for (const facetType of FACET_TYPES) {
-    const mergedContent: AttributedContent[] = [];
+    // Process each facet type
+    for (const facetType of FACET_TYPES) {
+        const mergedContent: AttributedContent[] = [];
 
-    // Iterate through catalysts in order
-    for (const catalyst of catalysts) {
-      const facetContent = catalyst.facets[facetType];
+        // Iterate through catalysts in order
+        for (const catalyst of catalysts) {
+            const facetContent = catalyst.facets[facetType];
       
-      if (facetContent && facetContent.length > 0) {
-        // Add each file's content with source attribution
-        for (const file of facetContent) {
-          mergedContent.push({
-            content: file.content,
-            sourceId: catalyst.manifest.id,
-            filename: file.filename,
-          });
+            if (facetContent && facetContent.length > 0) {
+                // Add each file's content with source attribution
+                for (const file of facetContent) {
+                    mergedContent.push({
+                        content: file.content,
+                        sourceId: catalyst.manifest.id,
+                        filename: file.filename,
+                    });
+                }
+
+                // Track contribution
+                const contrib = contributions.get(catalyst.manifest.id) || {
+                    facetTypes: [],
+                    contentCount: 0,
+                };
+                if (!contrib.facetTypes.includes(facetType)) {
+                    contrib.facetTypes.push(facetType);
+                }
+                contrib.contentCount += facetContent.length;
+                contributions.set(catalyst.manifest.id, contrib);
+            }
         }
 
-        // Track contribution
-        const contrib = contributions.get(catalyst.manifest.id) || {
-          facetTypes: [],
-          contentCount: 0,
-        };
-        if (!contrib.facetTypes.includes(facetType)) {
-          contrib.facetTypes.push(facetType);
+        // Only set facet type if there's content
+        if (mergedContent.length > 0) {
+            mergedFacets[facetType] = mergedContent;
         }
-        contrib.contentCount += facetContent.length;
-        contributions.set(catalyst.manifest.id, contrib);
-      }
     }
 
-    // Only set facet type if there's content
-    if (mergedContent.length > 0) {
-      mergedFacets[facetType] = mergedContent;
-    }
-  }
-
-  return {
-    catalystIds,
-    facets: mergedFacets,
-    contributions,
-  };
+    return {
+        catalystIds,
+        facets: mergedFacets,
+        contributions,
+    };
 }
 
 /**
  * Format a facet type name for display
  */
 function formatFacetName(facetType: FacetType): string {
-  const names: Record<FacetType, string> = {
-    questions: 'Questions',
-    constraints: 'Constraints',
-    outputTemplates: 'Output Templates',
-    domainKnowledge: 'Domain Knowledge',
-    processGuidance: 'Process Guidance',
-    validationRules: 'Validation Rules',
-  };
-  return names[facetType];
+    const names: Record<FacetType, string> = {
+        questions: 'Questions',
+        constraints: 'Constraints',
+        outputTemplates: 'Output Templates',
+        domainKnowledge: 'Domain Knowledge',
+        processGuidance: 'Process Guidance',
+        validationRules: 'Validation Rules',
+    };
+    return names[facetType];
 }
 
 /**
@@ -149,33 +149,33 @@ function formatFacetName(facetType: FacetType): string {
  * ```
  */
 export function renderFacet(
-  merged: MergedCatalyst, 
-  facetType: FacetType
+    merged: MergedCatalyst, 
+    facetType: FacetType
 ): string {
-  const content = merged.facets[facetType];
+    const content = merged.facets[facetType];
   
-  if (!content || content.length === 0) {
-    return '';
-  }
-
-  const lines: string[] = [];
-  let currentSource = '';
-
-  for (const item of content) {
-    // Add source header when it changes
-    if (item.sourceId !== currentSource) {
-      if (lines.length > 0) {
-        lines.push(''); // Blank line between sources
-      }
-      lines.push(`From ${item.sourceId}:`);
-      currentSource = item.sourceId;
+    if (!content || content.length === 0) {
+        return '';
     }
 
-    // Add content
-    lines.push(item.content);
-  }
+    const lines: string[] = [];
+    let currentSource = '';
 
-  return lines.join('\n');
+    for (const item of content) {
+    // Add source header when it changes
+        if (item.sourceId !== currentSource) {
+            if (lines.length > 0) {
+                lines.push(''); // Blank line between sources
+            }
+            lines.push(`From ${item.sourceId}:`);
+            currentSource = item.sourceId;
+        }
+
+        // Add content
+        lines.push(item.content);
+    }
+
+    return lines.join('\n');
 }
 
 /**
@@ -188,13 +188,13 @@ export function renderFacet(
  * @returns Object with all facets rendered
  */
 export function renderAllFacets(merged: MergedCatalyst): Record<FacetType, string> {
-  const rendered: Partial<Record<FacetType, string>> = {};
+    const rendered: Partial<Record<FacetType, string>> = {};
 
-  for (const facetType of FACET_TYPES) {
-    rendered[facetType] = renderFacet(merged, facetType);
-  }
+    for (const facetType of FACET_TYPES) {
+        rendered[facetType] = renderFacet(merged, facetType);
+    }
 
-  return rendered as Record<FacetType, string>;
+    return rendered as Record<FacetType, string>;
 }
 
 /**
@@ -207,19 +207,19 @@ export function renderAllFacets(merged: MergedCatalyst): Record<FacetType, strin
  * @returns Summary string
  */
 export function summarizeMerge(merged: MergedCatalyst): string {
-  if (merged.catalystIds.length === 0) {
-    return 'No catalysts merged';
-  }
+    if (merged.catalystIds.length === 0) {
+        return 'No catalysts merged';
+    }
 
-  const lines: string[] = [];
-  lines.push(`Merged ${merged.catalystIds.length} catalyst(s):`);
-  lines.push('');
+    const lines: string[] = [];
+    lines.push(`Merged ${merged.catalystIds.length} catalyst(s):`);
+    lines.push('');
 
-  for (const [catalystId, contrib] of merged.contributions) {
-    lines.push(`- ${catalystId}:`);
-    lines.push(`  - Facets: ${contrib.facetTypes.map(t => formatFacetName(t)).join(', ')}`);
-    lines.push(`  - Content items: ${contrib.contentCount}`);
-  }
+    for (const [catalystId, contrib] of merged.contributions) {
+        lines.push(`- ${catalystId}:`);
+        lines.push(`  - Facets: ${contrib.facetTypes.map(t => formatFacetName(t)).join(', ')}`);
+        lines.push(`  - Content items: ${contrib.contentCount}`);
+    }
 
-  return lines.join('\n');
+    return lines.join('\n');
 }

@@ -7,18 +7,18 @@ import { readFile, readdir, stat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { 
-  CatalystManifestSchema, 
-  FACET_DIRECTORIES,
-  type FacetType,
-} from '@/schema/schemas';
+    CatalystManifestSchema, 
+    FACET_DIRECTORIES,
+    type FacetType,
+} from '@/schema/schemas.js';
 import type { 
-  Catalyst, 
-  CatalystManifest, 
-  CatalystFacets, 
-  FacetContent,
-  CatalystLoadOptions,
-  CatalystLoadResult,
-} from '@/types';
+    Catalyst, 
+    CatalystManifest, 
+    CatalystFacets, 
+    FacetContent,
+    CatalystLoadOptions,
+    CatalystLoadResult,
+} from '@/types.js';
 
 /**
  * Load a catalyst manifest from catalyst.yml
@@ -27,29 +27,29 @@ import type {
  * @throws Error if manifest is missing or invalid
  */
 async function loadManifest(directoryPath: string): Promise<CatalystManifest> {
-  const manifestPath = join(directoryPath, 'catalyst.yml');
+    const manifestPath = join(directoryPath, 'catalyst.yml');
   
-  try {
-    const content = await readFile(manifestPath, 'utf-8');
-    const parsed = parseYaml(content);
+    try {
+        const content = await readFile(manifestPath, 'utf-8');
+        const parsed = parseYaml(content);
     
-    // Validate with Zod schema
-    const result = CatalystManifestSchema.safeParse(parsed);
+        // Validate with Zod schema
+        const result = CatalystManifestSchema.safeParse(parsed);
     
-    if (!result.success) {
-      const errors = result.error.issues.map(issue => 
-        `${issue.path.join('.')}: ${issue.message}`
-      ).join('; ');
-      throw new Error(`Invalid catalyst manifest: ${errors}`);
+        if (!result.success) {
+            const errors = result.error.issues.map(issue => 
+                `${issue.path.join('.')}: ${issue.message}`
+            ).join('; ');
+            throw new Error(`Invalid catalyst manifest: ${errors}`);
+        }
+    
+        return result.data;
+    } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+            throw new Error(`Catalyst manifest not found at ${manifestPath}`);
+        }
+        throw error;
     }
-    
-    return result.data;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      throw new Error(`Catalyst manifest not found at ${manifestPath}`);
-    }
-    throw error;
-  }
 }
 
 /**
@@ -58,43 +58,43 @@ async function loadManifest(directoryPath: string): Promise<CatalystManifest> {
  * @returns Array of FacetContent objects
  */
 async function loadFacetFiles(facetPath: string): Promise<FacetContent[]> {
-  try {
-    const entries = await readdir(facetPath, { withFileTypes: true });
-    const markdownFiles = entries.filter(
-      entry => entry.isFile() && entry.name.endsWith('.md')
-    );
+    try {
+        const entries = await readdir(facetPath, { withFileTypes: true });
+        const markdownFiles = entries.filter(
+            entry => entry.isFile() && entry.name.endsWith('.md')
+        );
     
-    const contents = await Promise.all(
-      markdownFiles.map(async (file) => {
-        const filePath = join(facetPath, file.name);
-        const content = await readFile(filePath, 'utf-8');
-        return {
-          filename: file.name,
-          content,
-        };
-      })
-    );
+        const contents = await Promise.all(
+            markdownFiles.map(async (file) => {
+                const filePath = join(facetPath, file.name);
+                const content = await readFile(filePath, 'utf-8');
+                return {
+                    filename: file.name,
+                    content,
+                };
+            })
+        );
     
-    return contents;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      // Directory doesn't exist - return empty array
-      return [];
+        return contents;
+    } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+            // Directory doesn't exist - return empty array
+            return [];
+        }
+        throw error;
     }
-    throw error;
-  }
 }
 
 /**
  * Check if a directory exists
  */
 async function directoryExists(path: string): Promise<boolean> {
-  try {
-    const stats = await stat(path);
-    return stats.isDirectory();
-  } catch {
-    return false;
-  }
+    try {
+        const stats = await stat(path);
+        return stats.isDirectory();
+    } catch {
+        return false;
+    }
 }
 
 /**
@@ -105,46 +105,46 @@ async function directoryExists(path: string): Promise<boolean> {
  * @returns Loaded facets and any warnings
  */
 async function loadFacets(
-  directoryPath: string,
-  manifest: CatalystManifest,
-  options: CatalystLoadOptions = {}
+    directoryPath: string,
+    manifest: CatalystManifest,
+    options: CatalystLoadOptions = {}
 ): Promise<{ facets: CatalystFacets; warnings: string[] }> {
-  const facets: CatalystFacets = {};
-  const warnings: string[] = [];
+    const facets: CatalystFacets = {};
+    const warnings: string[] = [];
   
-  // Load each facet type
-  for (const [facetKey, dirName] of Object.entries(FACET_DIRECTORIES)) {
-    const facetType = facetKey as FacetType;
-    const facetPath = join(directoryPath, dirName);
-    const exists = await directoryExists(facetPath);
+    // Load each facet type
+    for (const [facetKey, dirName] of Object.entries(FACET_DIRECTORIES)) {
+        const facetType = facetKey as FacetType;
+        const facetPath = join(directoryPath, dirName);
+        const exists = await directoryExists(facetPath);
     
-    // Check if facet is declared in manifest
-    const declared = manifest.facets?.[facetType];
+        // Check if facet is declared in manifest
+        const declared = manifest.facets?.[facetType];
     
-    if (exists) {
-      // Load the facet content
-      const content = await loadFacetFiles(facetPath);
-      if (content.length > 0) {
-        facets[facetType] = content;
-      }
+        if (exists) {
+            // Load the facet content
+            const content = await loadFacetFiles(facetPath);
+            if (content.length > 0) {
+                facets[facetType] = content;
+            }
       
-      // Warn if present but explicitly declared as false
-      if (declared === false && options.warnOnUndeclaredFacets) {
-        warnings.push(
-          `Facet '${facetType}' is present but declared as false in manifest`
-        );
-      }
-    } else {
-      // Warn if declared but missing
-      if (declared === true && options.warnOnMissingFacets) {
-        warnings.push(
-          `Facet '${facetType}' is declared in manifest but directory '${dirName}' not found`
-        );
-      }
+            // Warn if present but explicitly declared as false
+            if (declared === false && options.warnOnUndeclaredFacets) {
+                warnings.push(
+                    `Facet '${facetType}' is present but declared as false in manifest`
+                );
+            }
+        } else {
+            // Warn if declared but missing
+            if (declared === true && options.warnOnMissingFacets) {
+                warnings.push(
+                    `Facet '${facetType}' is declared in manifest but directory '${dirName}' not found`
+                );
+            }
+        }
     }
-  }
   
-  return { facets, warnings };
+    return { facets, warnings };
 }
 
 /**
@@ -166,35 +166,36 @@ async function loadFacets(
  * ```
  */
 export async function loadCatalyst(
-  directoryPath: string,
-  options: CatalystLoadOptions = {}
+    directoryPath: string,
+    options: CatalystLoadOptions = {}
 ): Promise<Catalyst> {
-  // Resolve to absolute path
-  const absolutePath = resolve(directoryPath);
+    // Resolve to absolute path
+    const absolutePath = resolve(directoryPath);
   
-  // Check if directory exists
-  if (!await directoryExists(absolutePath)) {
-    throw new Error(`Catalyst directory not found: ${absolutePath}`);
-  }
-  
-  // Load and validate manifest
-  const manifest = await loadManifest(absolutePath);
-  
-  // Load all facets
-  const { facets, warnings } = await loadFacets(absolutePath, manifest, options);
-  
-  // Log warnings if any
-  if (warnings.length > 0 && !options.strict) {
-    for (const warning of warnings) {
-      console.warn(`[catalyst-loader] ${warning}`);
+    // Check if directory exists
+    if (!await directoryExists(absolutePath)) {
+        throw new Error(`Catalyst directory not found: ${absolutePath}`);
     }
-  }
   
-  return {
-    manifest,
-    facets,
-    directoryPath: absolutePath,
-  };
+    // Load and validate manifest
+    const manifest = await loadManifest(absolutePath);
+  
+    // Load all facets
+    const { facets, warnings } = await loadFacets(absolutePath, manifest, options);
+  
+    // Log warnings if any
+    if (warnings.length > 0 && !options.strict) {
+        for (const warning of warnings) {
+            // eslint-disable-next-line no-console
+            console.warn(`[catalyst-loader] ${warning}`);
+        }
+    }
+  
+    return {
+        manifest,
+        facets,
+        directoryPath: absolutePath,
+    };
 }
 
 /**
@@ -207,21 +208,21 @@ export async function loadCatalyst(
  * @returns Result object with success/error
  */
 export async function loadCatalystSafe(
-  directoryPath: string,
-  options: CatalystLoadOptions = {}
+    directoryPath: string,
+    options: CatalystLoadOptions = {}
 ): Promise<CatalystLoadResult> {
-  try {
-    const catalyst = await loadCatalyst(directoryPath, options);
-    return {
-      success: true,
-      catalyst,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
+    try {
+        const catalyst = await loadCatalyst(directoryPath, options);
+        return {
+            success: true,
+            catalyst,
+        };
+    } catch (error) {
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+        };
+    }
 }
 
 /**
@@ -236,26 +237,26 @@ export async function loadCatalystSafe(
  * @returns Array of loaded catalysts
  */
 export async function resolveCatalysts(
-  identifiers: string[],
-  basePath: string = process.cwd(),
-  options: CatalystLoadOptions = {}
+    identifiers: string[],
+    basePath: string = process.cwd(),
+    options: CatalystLoadOptions = {}
 ): Promise<Catalyst[]> {
-  const catalysts: Catalyst[] = [];
+    const catalysts: Catalyst[] = [];
   
-  for (const identifier of identifiers) {
+    for (const identifier of identifiers) {
     // Phase 1: treat identifier as a path
     // If it's relative, resolve from basePath
-    const path = resolve(basePath, identifier);
+        const path = resolve(basePath, identifier);
     
-    try {
-      const catalyst = await loadCatalyst(path, options);
-      catalysts.push(catalyst);
-    } catch (error) {
-      throw new Error(
-        `Failed to load catalyst '${identifier}': ${error instanceof Error ? error.message : String(error)}`
-      );
+        try {
+            const catalyst = await loadCatalyst(path, options);
+            catalysts.push(catalyst);
+        } catch (error) {
+            throw new Error(
+                `Failed to load catalyst '${identifier}': ${error instanceof Error ? error.message : String(error)}`
+            );
+        }
     }
-  }
   
-  return catalysts;
+    return catalysts;
 }
