@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
-import dts from 'vite-plugin-dts';
 import replace from '@rollup/plugin-replace';
+import dts from 'vite-plugin-dts';
 
 export default defineConfig({
   build: {
@@ -12,7 +12,7 @@ export default defineConfig({
       fileName: () => 'riotplan-catalyst.js',
     },
     rollupOptions: {
-      external: ['zod', 'yaml'],
+      external: ['zod', 'yaml', /^node:/],
       output: {
         format: 'esm',
         preserveModules: true,
@@ -22,15 +22,17 @@ export default defineConfig({
     sourcemap: true,
   },
   plugins: [
-    dts({
-      include: ['src'],
-      outDir: 'dist',
-    }),
     replace({
       preventAssignment: true,
       values: {
         __VERSION__: JSON.stringify(process.env.npm_package_version),
       },
+    }),
+    dts({
+      include: ['src/**/*.ts'],
+      exclude: ['src/**/*.test.ts', 'tests/**/*'],
+      outDir: 'dist',
+      insertTypesEntry: true,
     }),
   ],
   resolve: {
