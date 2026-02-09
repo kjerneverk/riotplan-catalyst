@@ -6,7 +6,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
-import { PlanManifestSchema, type PlanManifestOutput } from '@/schema/schemas';
+import { PlanManifestSchema, type PlanManifestOutput } from '@/schema/schemas.js';
 
 /**
  * Plan manifest stored in plan.yaml
@@ -17,7 +17,7 @@ import { PlanManifestSchema, type PlanManifestOutput } from '@/schema/schemas';
  * - When the plan was created
  * - Arbitrary metadata for extensibility
  */
-export interface PlanManifest extends PlanManifestOutput {}
+export type PlanManifest = PlanManifestOutput;
 
 const MANIFEST_FILENAME = 'plan.yaml';
 
@@ -42,30 +42,30 @@ const MANIFEST_FILENAME = 'plan.yaml';
  * ```
  */
 export async function readPlanManifest(planDirectory: string): Promise<PlanManifest | null> {
-  const manifestPath = join(planDirectory, MANIFEST_FILENAME);
+    const manifestPath = join(planDirectory, MANIFEST_FILENAME);
   
-  try {
-    const content = await readFile(manifestPath, 'utf-8');
-    const parsed = parseYaml(content);
+    try {
+        const content = await readFile(manifestPath, 'utf-8');
+        const parsed = parseYaml(content);
     
-    // Validate with Zod schema
-    const result = PlanManifestSchema.safeParse(parsed);
+        // Validate with Zod schema
+        const result = PlanManifestSchema.safeParse(parsed);
     
-    if (!result.success) {
-      const errors = result.error.issues.map(issue => 
-        `${issue.path.join('.')}: ${issue.message}`
-      ).join('; ');
-      throw new Error(`Invalid plan manifest: ${errors}`);
+        if (!result.success) {
+            const errors = result.error.issues.map(issue => 
+                `${issue.path.join('.')}: ${issue.message}`
+            ).join('; ');
+            throw new Error(`Invalid plan manifest: ${errors}`);
+        }
+    
+        return result.data;
+    } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+            // File doesn't exist - return null for backward compatibility
+            return null;
+        }
+        throw error;
     }
-    
-    return result.data;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      // File doesn't exist - return null for backward compatibility
-      return null;
-    }
-    throw error;
-  }
 }
 
 /**
@@ -90,34 +90,34 @@ export async function readPlanManifest(planDirectory: string): Promise<PlanManif
  * ```
  */
 export async function writePlanManifest(
-  planDirectory: string,
-  manifest: PlanManifest
+    planDirectory: string,
+    manifest: PlanManifest
 ): Promise<void> {
-  // Validate manifest
-  const result = PlanManifestSchema.safeParse(manifest);
+    // Validate manifest
+    const result = PlanManifestSchema.safeParse(manifest);
   
-  if (!result.success) {
-    const errors = result.error.issues.map(issue => 
-      `${issue.path.join('.')}: ${issue.message}`
-    ).join('; ');
-    throw new Error(`Invalid plan manifest: ${errors}`);
-  }
+    if (!result.success) {
+        const errors = result.error.issues.map(issue => 
+            `${issue.path.join('.')}: ${issue.message}`
+        ).join('; ');
+        throw new Error(`Invalid plan manifest: ${errors}`);
+    }
   
-  // Ensure created timestamp exists
-  const manifestToWrite: PlanManifest = {
-    ...result.data,
-    created: result.data.created || new Date().toISOString(),
-  };
+    // Ensure created timestamp exists
+    const manifestToWrite: PlanManifest = {
+        ...result.data,
+        created: result.data.created || new Date().toISOString(),
+    };
   
-  // Serialize to YAML
-  const yaml = stringifyYaml(manifestToWrite, {
-    indent: 2,
-    lineWidth: 120,
-  });
+    // Serialize to YAML
+    const yaml = stringifyYaml(manifestToWrite, {
+        indent: 2,
+        lineWidth: 120,
+    });
   
-  // Write to file
-  const manifestPath = join(planDirectory, MANIFEST_FILENAME);
-  await writeFile(manifestPath, yaml, 'utf-8');
+    // Write to file
+    const manifestPath = join(planDirectory, MANIFEST_FILENAME);
+    await writeFile(manifestPath, yaml, 'utf-8');
 }
 
 /**
@@ -139,32 +139,32 @@ export async function writePlanManifest(
  * ```
  */
 export async function updatePlanManifest(
-  planDirectory: string,
-  updates: Partial<PlanManifest>
+    planDirectory: string,
+    updates: Partial<PlanManifest>
 ): Promise<void> {
-  // Read existing manifest
-  let existing = await readPlanManifest(planDirectory);
+    // Read existing manifest
+    let existing = await readPlanManifest(planDirectory);
   
-  // If no existing manifest, start with a minimal one
-  if (!existing) {
+    // If no existing manifest, start with a minimal one
+    if (!existing) {
     // Updates must contain at least id and title
-    if (!updates.id || !updates.title) {
-      throw new Error('Cannot create manifest without id and title');
+        if (!updates.id || !updates.title) {
+            throw new Error('Cannot create manifest without id and title');
+        }
+        existing = {
+            id: '',
+            title: '',
+        };
     }
-    existing = {
-      id: '',
-      title: '',
+  
+    // Merge updates
+    const merged: PlanManifest = {
+        ...existing,
+        ...updates,
     };
-  }
   
-  // Merge updates
-  const merged: PlanManifest = {
-    ...existing,
-    ...updates,
-  };
-  
-  // Write back
-  await writePlanManifest(planDirectory, merged);
+    // Write back
+    await writePlanManifest(planDirectory, merged);
 }
 
 /**
@@ -182,20 +182,20 @@ export async function updatePlanManifest(
  * ```
  */
 export async function addCatalystToManifest(
-  planDirectory: string,
-  catalystId: string
+    planDirectory: string,
+    catalystId: string
 ): Promise<void> {
-  const manifest = await readPlanManifest(planDirectory);
-  const currentCatalysts = manifest?.catalysts ?? [];
+    const manifest = await readPlanManifest(planDirectory);
+    const currentCatalysts = manifest?.catalysts ?? [];
   
-  // Only add if not already present
-  if (!currentCatalysts.includes(catalystId)) {
-    currentCatalysts.push(catalystId);
-  }
+    // Only add if not already present
+    if (!currentCatalysts.includes(catalystId)) {
+        currentCatalysts.push(catalystId);
+    }
   
-  await updatePlanManifest(planDirectory, {
-    catalysts: currentCatalysts,
-  });
+    await updatePlanManifest(planDirectory, {
+        catalysts: currentCatalysts,
+    });
 }
 
 /**
@@ -212,17 +212,17 @@ export async function addCatalystToManifest(
  * ```
  */
 export async function removeCatalystFromManifest(
-  planDirectory: string,
-  catalystId: string
+    planDirectory: string,
+    catalystId: string
 ): Promise<void> {
-  const manifest = await readPlanManifest(planDirectory);
-  const currentCatalysts = manifest?.catalysts ?? [];
+    const manifest = await readPlanManifest(planDirectory);
+    const currentCatalysts = manifest?.catalysts ?? [];
   
-  const filtered = currentCatalysts.filter(id => id !== catalystId);
+    const filtered = currentCatalysts.filter(id => id !== catalystId);
   
-  if (filtered.length !== currentCatalysts.length) {
-    await updatePlanManifest(planDirectory, {
-      catalysts: filtered.length > 0 ? filtered : undefined,
-    });
-  }
+    if (filtered.length !== currentCatalysts.length) {
+        await updatePlanManifest(planDirectory, {
+            catalysts: filtered.length > 0 ? filtered : undefined,
+        });
+    }
 }
